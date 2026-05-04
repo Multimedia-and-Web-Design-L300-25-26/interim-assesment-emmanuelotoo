@@ -50,10 +50,25 @@ const login = async (req, res) => {
       expiresIn: "1d",
     });
 
-    res.status(200).json({ message: "Login successful", token, redirect: "/" });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.status(200).json({ message: "Login successful", redirect: "/" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-module.exports = { register, login };
+const logout = (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+module.exports = { register, login, logout };
